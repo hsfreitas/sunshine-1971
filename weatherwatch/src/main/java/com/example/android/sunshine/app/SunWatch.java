@@ -168,6 +168,7 @@ public class SunWatch extends CanvasWatchFaceService {
                     .build());
             Resources resources = SunWatch.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
+            mDateYOffSet = resources.getDimension(R.dimen.digital_date_y_offset);
 
 //            mBackgroundPaint = new Paint();
 //            mBackgroundPaint.setColor(resources.getColor(R.color.background));
@@ -382,20 +383,22 @@ public class SunWatch extends CanvasWatchFaceService {
                 canvas.drawColor(Color.BLACK);
             } else {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
+
                 // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
 
                 mTime.setToNow();
                 String hourText = mAmbient
                         ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                        : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
+                        : String.format("%d:%02d:%2d", mTime.hour, mTime.minute, mTime.second);
                 canvas.drawText(hourText, mXOffset, mYOffset, mTextPaint);
+                //canvas.drawText(hourText, bounds.width() / 2, mYOffset, mTextPaint);
 
+                canvas.drawLine(mXOffset, mYOffset, mXOffset, mYOffset, mSeparatorLine);
 
                 String dateText = mDaysOfWeek[mCalendarTime.get(Calendar.DAY_OF_WEEK)] + " "
                         + mMonthsOfYear[mCalendarTime.get(Calendar.MONTH)] + " "
                         + mCalendarTime.get(Calendar.DATE) + " "
                         + mCalendarTime.get(Calendar.YEAR);
-
 
 
                 canvas.drawText(dateText.toUpperCase()

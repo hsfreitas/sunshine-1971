@@ -273,35 +273,6 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         super.onStop();
     }
 
-//    private void sendDataToWatch(Cursor cursor){
-//
-//        if(cursor != null) {
-//            cursor.moveToPosition(0);
-//            PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/weather_data");
-//            DataMap data = dataMapRequest.getDataMap();
-//
-//            data.putString("max_temp", Utility.formatTemperature(MainActivity.this, cursor.getDouble(DetailFragment.COL_WEATHER_MAX_TEMP)));
-//            data.putString("min_temp", Utility.formatTemperature(MainActivity.this, cursor.getDouble(DetailFragment.COL_WEATHER_MIN_TEMP)));
-//            data.putInt("weather_image_id", cursor.getInt(DetailFragment.COL_WEATHER_CONDITION_ID));
-//            Wearable.DataApi.putDataItem(mGoogleApiClient, dataMapRequest.asPutDataRequest())
-//                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-//                        @Override
-//                        public void onResult(DataApi.DataItemResult dataItemResult) {
-//                            if (!dataItemResult.getStatus().isSuccess()) {
-//                                Log.e("YourApp", "ERROR: failed to putDataItem, status code: "
-//                                        + dataItemResult.getStatus().getStatusCode());
-//                            } else {
-//                                Log.e("YourApp", "Success: putDataItem, status code: "
-//                                        + dataItemResult.getStatus().getStatusCode());
-//                            }
-//                        }
-//                    });
-//            cursor.close();
-//        }
-//
-//
-//    }
-
 
 
 }

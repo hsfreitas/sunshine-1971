@@ -24,7 +24,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -120,7 +119,7 @@ public class SunWatch extends CanvasWatchFaceService {
         private Paint mMaxTempPaint;
         private Paint mMinTempPaint;
         private Paint mSeparatorLine;
-        private Paint mWeatherImage;
+        private Paint mWeatherImagePaint;
         private boolean mAmbient;
         private String mMinTemp = "";
         private String mMaxTemp = "";
@@ -129,8 +128,9 @@ public class SunWatch extends CanvasWatchFaceService {
         private float mDateYOffSet;
         private String[] mDaysOfWeek;
         private String[] mMonthsOfYear;
-        private Bitmap mWeatherBitmap = null;
+
         private int mWeatherImageId = -1;
+
 
         /*
       *
@@ -145,8 +145,8 @@ public class SunWatch extends CanvasWatchFaceService {
         };
         int mTapCount;
 
-        float mXOffset;
-        float mYOffset;
+        private float mXOffset;
+        private float mYOffset;
 
 
 
@@ -170,13 +170,7 @@ public class SunWatch extends CanvasWatchFaceService {
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
             mDateYOffSet = resources.getDimension(R.dimen.digital_date_y_offset);
 
-//            mBackgroundPaint = new Paint();
-//            mBackgroundPaint.setColor(resources.getColor(R.color.background));
-//
-//            mTextPaint = new Paint();
-//            mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
-//
-//            mTime = new Time();
+
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.digital_background));
@@ -219,7 +213,7 @@ public class SunWatch extends CanvasWatchFaceService {
             paint.setColor(textColor);
             paint.setAntiAlias(true);
             paint.setTextAlign(Paint.Align.CENTER);
-            paint.setStrokeWidth(1);
+            paint.setStrokeWidth(0.5f);
             return paint;
         }
 
@@ -322,6 +316,7 @@ public class SunWatch extends CanvasWatchFaceService {
             mDateText.setTextSize(dateTextSize);
             mMinTempPaint.setTextSize(minTempTextSize);
             mMaxTempPaint.setTextSize(maxTempTextSize);
+
         }
 
         @Override
@@ -340,9 +335,14 @@ public class SunWatch extends CanvasWatchFaceService {
         public void onAmbientModeChanged(boolean inAmbientMode) {
             super.onAmbientModeChanged(inAmbientMode);
             if (mAmbient != inAmbientMode) {
-                mAmbient = inAmbientMode;
+                //mAmbient = inAmbientMode;
+                mBackgroundPaint.setColor(inAmbientMode ? getResources().getColor(R.color.background) : getResources().getColor(R.color.digital_background));
                 if (mLowBitAmbient) {
                     mTextPaint.setAntiAlias(!inAmbientMode);
+                    mDateText.setAntiAlias(!inAmbientMode);
+                    mMaxTempPaint.setAntiAlias(!inAmbientMode);
+                    mMinTempPaint.setAntiAlias(!inAmbientMode);
+                    mSeparatorLine.setAntiAlias(!inAmbientMode);
                 }
                 invalidate();
             }
@@ -370,7 +370,7 @@ public class SunWatch extends CanvasWatchFaceService {
                     // The user has completed the tap gesture.
                     mTapCount++;
                     mBackgroundPaint.setColor(resources.getColor(mTapCount % 2 == 0 ?
-                            R.color.background : R.color.background2));
+                            R.color.background : R.color.digital_background));
                     break;
             }
             invalidate();
@@ -379,21 +379,27 @@ public class SunWatch extends CanvasWatchFaceService {
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
             // Draw the background.
-            if (isInAmbientMode()) {
-                canvas.drawColor(Color.BLACK);
-            } else {
+
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
 
                 // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
 
-                mTime.setToNow();
-                String hourText = mAmbient
-                        ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                        : String.format("%d:%02d:%2d", mTime.hour, mTime.minute, mTime.second);
-                canvas.drawText(hourText, mXOffset, mYOffset, mTextPaint);
-                //canvas.drawText(hourText, bounds.width() / 2, mYOffset, mTextPaint);
+                int xCenter = bounds.width() / 2;
 
-                canvas.drawLine(mXOffset, mYOffset, mXOffset, mYOffset, mSeparatorLine);
+                int yCenter = bounds.height() / 2;
+
+                int spaceY = 20;
+
+                int spaceX = 10;
+
+
+                mTime.setToNow();
+                String hourText = String.format("%d:%02d", mTime.hour, mTime.minute);
+             if(!mAmbient) {
+
+
+
+                canvas.drawText(hourText, bounds.width() / 4, mYOffset, mTextPaint);
 
                 String dateText = mDaysOfWeek[mCalendarTime.get(Calendar.DAY_OF_WEEK)] + " "
                         + mMonthsOfYear[mCalendarTime.get(Calendar.MONTH)] + " "
@@ -408,12 +414,12 @@ public class SunWatch extends CanvasWatchFaceService {
 
 
                 canvas.drawText(mMaxTemp,bounds.width()/2,
-                        bounds.height()/2+60
+                        bounds.height()/2 + 80
                         ,mMaxTempPaint);
 
                 canvas.drawText(mMinTemp
                         , bounds.width() / 2 + 35
-                        , bounds.height() / 2 + 60
+                        , bounds.height() / 2 + 80
                         , mMinTempPaint);
 
                 if(mWeatherImageId != -1){
@@ -421,18 +427,17 @@ public class SunWatch extends CanvasWatchFaceService {
                             ,getArtResourceForWeatherCondition(mWeatherImageId));
                     Paint paint= new Paint();
                     canvas.drawBitmap(icon, bounds.width() / 2 - SunWatch.this.getResources().getDimension(R.dimen.digital_weather_image_x_offset),
-                            bounds.height() / 2 + SunWatch.this.getResources().getDimension(R.dimen.digital_weather_image_y_offset),
+                            bounds.height() / 2 + 40,
                             paint);
                 }
 
+
+
+
+
             }
 
-//            // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
-//            mTime.setToNow();
-//            String text = mAmbient
-//                    ? String.format("%d:%02d", mTime.hour, mTime.minute)
-//                    : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
-//            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+//
         }
 
         /**

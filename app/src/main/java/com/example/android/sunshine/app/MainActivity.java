@@ -17,13 +17,11 @@ package com.example.android.sunshine.app;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.content.CursorLoader;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -41,7 +39,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 
@@ -58,21 +55,7 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
     private boolean mTwoPane;
     private String mLocation;
 
-    private static final String[] DETAIL_COLUMNS = {
-            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
-            WeatherContract.WeatherEntry.COLUMN_DATE,
-            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
-            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_HUMIDITY,
-            WeatherContract.WeatherEntry.COLUMN_PRESSURE,
-            WeatherContract.WeatherEntry.COLUMN_WIND_SPEED,
-            WeatherContract.WeatherEntry.COLUMN_DEGREES,
-            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-            // This works because the WeatherProvider returns location data joined with
-            // weather data, even though they're stored in two different tables.
-            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING
-    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -251,11 +234,22 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
     public void onConnected(Bundle bundle) {
         Log.d("Google Wear API","connected");
 
-        String location = Utility.getPreferredLocation(MainActivity.this);
-        Uri weatherLocation = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(location, System.currentTimeMillis());
-        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
-        Cursor cursor = new CursorLoader(MainActivity.this,weatherLocation, DETAIL_COLUMNS,null,null,sortOrder).loadInBackground();
-        sendDataToWatch(cursor);
+        DetailFragment data = new DetailFragment();
+        PutDataMapRequest dataMap = data.ActualWeather(getBaseContext());
+
+        Wearable.DataApi.putDataItem(mGoogleApiClient, dataMap.asPutDataRequest())
+                .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                    @Override
+                    public void onResult(DataApi.DataItemResult dataItemResult) {
+                        if (!dataItemResult.getStatus().isSuccess()) {
+                            Log.e("YourApp", "ERROR: failed to putDataItem, status code: "
+                                    + dataItemResult.getStatus().getStatusCode());
+                        } else {
+                            Log.e("YourApp", "Success: putDataItem, status code: "
+                                    + dataItemResult.getStatus().getStatusCode());
+                        }
+                    }
+                });
 
     }
 
@@ -279,34 +273,34 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         super.onStop();
     }
 
-    private void sendDataToWatch(Cursor cursor){
-
-        if(cursor != null) {
-            cursor.moveToPosition(0);
-            PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/weather_data");
-            DataMap data = dataMapRequest.getDataMap();
-
-            data.putString("max_temp", Utility.formatTemperature(MainActivity.this, cursor.getDouble(DetailFragment.COL_WEATHER_MAX_TEMP)));
-            data.putString("min_temp", Utility.formatTemperature(MainActivity.this, cursor.getDouble(DetailFragment.COL_WEATHER_MIN_TEMP)));
-            data.putInt("weather_image_id", cursor.getInt(DetailFragment.COL_WEATHER_CONDITION_ID));
-            Wearable.DataApi.putDataItem(mGoogleApiClient, dataMapRequest.asPutDataRequest())
-                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-                        @Override
-                        public void onResult(DataApi.DataItemResult dataItemResult) {
-                            if (!dataItemResult.getStatus().isSuccess()) {
-                                Log.e("YourApp", "ERROR: failed to putDataItem, status code: "
-                                        + dataItemResult.getStatus().getStatusCode());
-                            } else {
-                                Log.e("YourApp", "Success: putDataItem, status code: "
-                                        + dataItemResult.getStatus().getStatusCode());
-                            }
-                        }
-                    });
-            cursor.close();
-        }
-
-
-    }
+//    private void sendDataToWatch(Cursor cursor){
+//
+//        if(cursor != null) {
+//            cursor.moveToPosition(0);
+//            PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/weather_data");
+//            DataMap data = dataMapRequest.getDataMap();
+//
+//            data.putString("max_temp", Utility.formatTemperature(MainActivity.this, cursor.getDouble(DetailFragment.COL_WEATHER_MAX_TEMP)));
+//            data.putString("min_temp", Utility.formatTemperature(MainActivity.this, cursor.getDouble(DetailFragment.COL_WEATHER_MIN_TEMP)));
+//            data.putInt("weather_image_id", cursor.getInt(DetailFragment.COL_WEATHER_CONDITION_ID));
+//            Wearable.DataApi.putDataItem(mGoogleApiClient, dataMapRequest.asPutDataRequest())
+//                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+//                        @Override
+//                        public void onResult(DataApi.DataItemResult dataItemResult) {
+//                            if (!dataItemResult.getStatus().isSuccess()) {
+//                                Log.e("YourApp", "ERROR: failed to putDataItem, status code: "
+//                                        + dataItemResult.getStatus().getStatusCode());
+//                            } else {
+//                                Log.e("YourApp", "Success: putDataItem, status code: "
+//                                        + dataItemResult.getStatus().getStatusCode());
+//                            }
+//                        }
+//                    });
+//            cursor.close();
+//        }
+//
+//
+//    }
 
 
 

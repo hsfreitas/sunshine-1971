@@ -15,6 +15,7 @@
  */
 package com.example.android.sunshine.app;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -25,7 +26,6 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
-import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -40,6 +40,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.WeatherContract.WeatherEntry;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -289,4 +291,28 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) { }
+
+    public PutDataMapRequest ActualWeather(Context context){
+
+        String loc = Utility.getPreferredLocation(context);
+        Uri weatherLoc = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(loc, System.currentTimeMillis());
+        String sort = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+
+        Cursor cursor = new CursorLoader(context,weatherLoc, DETAIL_COLUMNS,null,null,sort).loadInBackground();
+        PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/weather_data");
+
+        if(cursor != null) {
+            cursor.moveToPosition(0);
+            DataMap data = dataMapRequest.getDataMap();
+
+            data.putString("max_temp", Utility.formatTemperature(context, cursor.getDouble(DetailFragment.COL_WEATHER_MAX_TEMP)));
+            data.putString("min_temp", Utility.formatTemperature(context, cursor.getDouble(DetailFragment.COL_WEATHER_MIN_TEMP)));
+            data.putInt("weather_image_id", cursor.getInt(DetailFragment.COL_WEATHER_CONDITION_ID));
+
+            cursor.close();
+        }
+
+        return dataMapRequest;
+
+    }
 }
